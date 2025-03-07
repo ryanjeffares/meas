@@ -1,7 +1,7 @@
 use crate::scanner::scanner::Scanner;
 use crate::scanner::token::{Token, TokenType};
 
-use crate::ast::ast_node::AstNode;
+use crate::ast::ast_node::{AstNode, BinaryOp};
 use anyhow::{Result, anyhow};
 
 pub struct Compiler {
@@ -113,12 +113,65 @@ impl Compiler {
     }
 
     fn expression(&mut self) -> Result<AstNode> {
+        self.term()
+    }
+
+    fn term(&mut self) -> Result<AstNode> {
+        match self.primary() {
+            Ok(lhs) => loop {
+                if self.match_token(TokenType::Plus) {
+                    match self.expression() {
+                        Ok(rhs) => {
+                            return Ok(AstNode::BinaryOp {
+                                op: BinaryOp::Plus,
+                                lhs: Box::new(lhs),
+                                rhs: Box::new(rhs),
+                            });
+                        }
+                        Err(err) => return Err(err),
+                    }
+                } else if self.match_token(TokenType::Minus) {
+                    match self.expression() {
+                        Ok(rhs) => {
+                            return Ok(AstNode::BinaryOp {
+                                op: BinaryOp::Minus,
+                                lhs: Box::new(lhs),
+                                rhs: Box::new(rhs),
+                            });
+                        }
+                        Err(err) => return Err(err),
+                    }
+                } else {
+                    return Ok(lhs);
+                }
+            },
+            Err(err) => Err(err),
+        }
+    }
+
+    fn primary(&mut self) -> Result<AstNode> {
         if self.match_token(TokenType::Integer) {
             let text = self.scanner.get_token_text(self.previous.unwrap());
+
             match text.parse::<i32>() {
                 Ok(integer) => Ok(AstNode::IntegerLiteral { value: integer }),
                 Err(err) => Err(anyhow!("Cannot parse integer from {text}: {}", err)),
             }
+        } else if self.match_token(TokenType::Identifier) {
+            let callee = self
+                .scanner
+                .get_token_text(self.previous.unwrap())
+                .to_owned();
+
+            if !self.match_token(TokenType::ParenLeft) {
+                return Err(anyhow!("Expected '('"));
+            }
+
+            if !self.match_token(TokenType::ParenRight) {
+                return Err(anyhow!("Expected ')'"));
+            }
+
+            Ok(AstNode::Call { callee })
         } else {
             Err(anyhow!("Invalid start of expression"))
         }

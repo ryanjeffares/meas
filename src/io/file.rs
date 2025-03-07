@@ -1,10 +1,10 @@
 use std::{
     fs::{self, File},
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, BufWriter, Write},
     path::Path,
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 pub fn read_entire_file<P>(path: P) -> Result<String>
 where
@@ -30,4 +30,18 @@ where
     }
 
     Ok(vec)
+}
+
+pub fn write_file_lines<P>(path: P, lines: &Vec<String>) -> Result<()>
+where
+    P: AsRef<Path>,
+{
+    let mut file = File::create(path)?;
+
+    for line in lines {
+        file.write(line.as_bytes())?;
+        file.write(b"\n")?;
+    }
+
+    Ok(())
 }

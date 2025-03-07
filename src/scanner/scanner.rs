@@ -32,15 +32,18 @@ impl Scanner {
                 }
 
                 Some(match current {
-                    b'{' => self.make_token(TokenType::BraceLeft),
-                    b'}' => self.make_token(TokenType::BraceRight),
                     b'-' => match self.peek() {
                         Some(b'>') => {
                             self.advance();
                             self.make_token(TokenType::Arrow)
                         }
-                        _ => self.make_token(TokenType::Error),
+                        _ => self.make_token(TokenType::Minus),
                     },
+                    b'{' => self.make_token(TokenType::BraceLeft),
+                    b'}' => self.make_token(TokenType::BraceRight),
+                    b'(' => self.make_token(TokenType::ParenLeft),
+                    b')' => self.make_token(TokenType::ParenRight),
+                    b'+' => self.make_token(TokenType::Plus),
                     b';' => self.make_token(TokenType::Semicolon),
                     _ => self.make_token(TokenType::Error),
                 })

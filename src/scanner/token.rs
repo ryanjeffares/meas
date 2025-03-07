@@ -6,6 +6,10 @@ pub enum TokenType {
     Error,
     Identifier,
     Integer,
+    Minus,
+    ParenLeft,
+    ParenRight,
+    Plus,
     Return,
     Semicolon,
 }
